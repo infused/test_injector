@@ -1,0 +1,18 @@
+TestInjector
+============
+
+inject_association_tests
+------------------------
+
+For each association in the tested ActiveRecord model, a number of tests will be injected
+into the unit test:
+	- creates a test for the fixture that should be defined within the unit test
+
+- creates a test to verify the proper operation of the acts_as_versioned plugin if defined on the ActiveRecord model
+- creates a test to verify that optimistic locking is working correctly
+	
+TODO
+====
+
+- Test polymorphic associations
+- Test standard validations
