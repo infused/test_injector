@@ -16,3 +16,6 @@ TODO
 
 - Test polymorphic associations
 - Test standard validations
+- Test that the associations order_by columns exist
+- Test acts_as_list
+- Test acts_as_tree
