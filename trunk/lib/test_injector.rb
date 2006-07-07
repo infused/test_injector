@@ -10,7 +10,8 @@ module TestInjector
   def inject_activerecord_tests
     if base_class.ancestors.include?(ActiveRecord::Base)
       inject_association_tests if base_class.respond_to?(:reflections)
-      define_acts_as_versioned_test(base_class) if base_class.respond_to?("acts_as_versioned") and base_class.include?(ActiveRecord::Acts::Versioned::ActMethods)      define_optimistic_locking_test(base_class) if base_class.column_names.include?("lock_version")
+      define_acts_as_versioned_test(base_class) if base_class.respond_to?("acts_as_versioned") and base_class.include?(ActiveRecord::Acts::Versioned::ActMethods)      
+      define_optimistic_locking_test(base_class) if base_class.column_names.include?("lock_version")
     end
   end
   
