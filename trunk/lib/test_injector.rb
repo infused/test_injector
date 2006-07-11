@@ -95,6 +95,7 @@ module TestInjector
   def define_fixture_test(association)
     fixture_name = eval(association.class_name).table_name
     define_method "test_fixture_defined_for_#{fixture_name}" do
+      assert respond_to?(association.options[:join_table]), "No fixture defined for :#{fixture_name}" if association.options[:join_table]
       assert respond_to?(fixture_name), "No fixture defined for :#{fixture_name}"
     end
   end
