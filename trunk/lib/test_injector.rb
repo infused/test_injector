@@ -69,12 +69,16 @@ module TestInjector
           association_count = model_instance.send(association.name).size
           associated_record_count = associated_model.count
           assert model_instance.destroy
-          assert_equal associated_record_count - association_count, associated_model.count, 
-            "Unexpected result when calling #{association.options[:dependent]} on dependent association :#{association.name}"
+          message = "Unexpected result when calling #{association.options[:dependent]} on dependent association :#{association.name}"
+          if base_class.include?(ActiveRecord::Acts::Tree) && model_instance.respond_to?(:children)
+            assert associated_record_count - association_count >= associated_model.count, message
+          else
+            assert_equal associated_record_count - association_count, associated_model.count, message
+          end
         elsif association.options[:dependent] == :nullify
           associated_record_ids = model_instance.send(association.name).map {|r| r.id}
           assert model_instance.destroy
-          associated_record_ids.each  {|the_id| assert [0,'0',nil].include?(associated_model.find(the_id).send(association.primary_key_name))}
+          associated_record_ids.each {|the_id| assert [0,'0',nil].include?(associated_model.find(the_id).send(association.primary_key_name))}
         end
       
       # tests for associations the return a single object
@@ -99,7 +103,6 @@ module TestInjector
       assert respond_to?(fixture_name), "No fixture defined for :#{fixture_name}"
     end
   end
-  
   
   # This test will run for any ActiveRecord model that uses the acts_as_versioned plugin. Versioning may fail if the versioned table is 
   # not set up correctly.  Including this test insures that versioning is set up correctly and is working as expected.
