@@ -40,7 +40,7 @@ module TestInjector
       @klass ||= Module.const_get(self.to_s.gsub(/Test$/, ''))
     end
     
-    def inject_activerecord_tests(klass = klass)
+    def inject_activerecord_tests
       if klass.ancestors.include?(ActiveRecord::Base)
         inject_association_tests
         define_acts_as_versioned_test(klass) if klass.respond_to?(:acts_as_versioned) and klass.respond_to?(:versioned_table_name)
