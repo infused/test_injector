@@ -55,48 +55,49 @@ module TestInjector
       klass.reflect_on_all_associations.each do |association|
         unless ignore_associations.include?(association.name)
           define_fixture_test(association)
-          define_association_test(association)
+          if collectible_associations.include?(association.macro)
+            define_collectible_association_test(association)
+          else
+            define_association_test(association)
+          end
+          define_dependent_association_test(association) if association.options[:dependent]
         end
+      end
+    end
+    
+    def define_collectible_association_test(association)
+      association_name = association.options[:through] ? "#{association.name}_through_#{association.options[:through]}" : association.name
+      define_method "test_#{association.macro}_#{association_name}" do
+        record = klass.find(:first)
+        assert_kind_of Array, record.send(association.name), "#{klass}##{association.name} expected an array of #{association.class_name}'s"
+        assert_kind_of association.klass, record.send(association.name).first, 
+          "#{klass}##{association.name}.first should have returned a #{association.class_name}. If the result is a NilClass, verify your fixtures."
       end
     end
   
     def define_association_test(association)
-      collectible_associations = [:has_many, :has_and_belongs_to_many]
-      association_name = association.options[:through] ? "#{association.name}_through_#{association.options[:through]}" : association.name
-      define_method "test_#{association.macro}_#{association_name}" do
+      define_method "test_#{association.macro}_#{association.name}" do
         record = klass.find(:first)
-        # tests for associations that return a collection of objects
-        if collectible_associations.include?(association.macro)
-          assert_kind_of Array, record.send(association.name), "#{klass}##{association.name} expected an array of #{association.class_name}'s"
-          assert_kind_of association.klass, record.send(association.name).first, 
-            "#{klass}##{association.name}.first should have returned a #{association.class_name}. If the result is a NilClass, verify your fixtures."
-          
-          if association.options[:dependent]
-            msg = "Unexpected result when calling #{association.options[:dependent]} on dependent association :#{association.name}"
-            associated_record_ids = record.send(association.name).map {|r| r.id}
-            assert record.destroy
-            case association.options[:dependent]
-            when :destroy, :delete_all  
-              associated_record_ids.each {|r| assert_raises(ActiveRecord::RecordNotFound, msg) { association.klass.find(r) }}
-            when :nullify
-              associated_record_ids.each {|r| assert_nil association.klass.find(r).send(association.primary_key_name), msg}
-            end
-          end
-      
-        # tests for associations the return a single object
-        else
-          assert_kind_of association.klass, record.send(association.name), 
-            "#{klass}##{association.name} was expected to be a #{association.class_name}. If the result is a NilClass, verify your fixtures."
-          msg = "Unexpected result when calling #{association.options[:dependent]} on dependent association :#{association.name}"
-          if [:destroy, :delete].include?(association.options[:dependent])
-            record_id = record.send(association.name).id
-            assert record.destroy
-            assert_raises(ActiveRecord::RecordNotFound, msg) { association.klass.find(record_id) }
-          end
-        end
-      
+        assert_kind_of association.klass, record.send(association.name), 
+          "#{klass}##{association.name} was expected to be a #{association.class_name}. If the result is a NilClass, verify your fixtures."
       end
     end
+    
+    def define_dependent_association_test(association)
+      define_method "test_#{association.options[:dependent]}_dependent_#{association.name}" do
+        msg = "Unexpected result when calling #{association.options[:dependent]} on dependent association :#{association.name}"
+        record = klass.find(:first)
+        dependent_ids = record.send(association.name).is_a?(Array) ? record.send(association.name).map {|r| r.id} : [record.send(association.name)]
+        assert record.destroy
+        case association.options[:dependent]
+        when :destroy, :delete_all  
+          dependent_ids.each {|r| assert_raises(ActiveRecord::RecordNotFound, msg) { association.klass.find(r) }}
+        when :nullify
+          dependent_ids.each {|r| assert_nil association.klass.find(r).send(association.primary_key_name), msg}
+        end
+      end
+    end
+
     # This test will run for any ActiveRecord model.  For each association defined in the model being tested (belongs_to, has_many, etc),
     # the test checks to see if a fixture corresponding to the associated model is included in the fixture list.
     def define_fixture_test(association)
