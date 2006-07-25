@@ -29,8 +29,8 @@ module TestInjector
   end
   
   # Get all descendants of an acts_as_tree node
-  def all_descendants(node, id_only = true)
-    nodes = node.children.each {|subnode| all_descendants(subnode)}.flatten
+  def all_descendants(tree_node, id_only = true)
+    nodes = tree_node.children.each {|subnode| all_descendants(subnode)}.flatten
     return id_only ? nodes.collect {|node| node.id} : nodes
   end
   
@@ -45,6 +45,7 @@ module TestInjector
         inject_association_tests
         define_acts_as_versioned_test(klass) if klass.respond_to?(:acts_as_versioned) and klass.respond_to?(:versioned_table_name)
         define_optimistic_locking_test(klass) if klass.column_names.include?("lock_version") && ActiveRecord::Base.lock_optimistically == true
+        define_acts_as_tree_test(klass) if klass.include?(ActiveRecord::Acts::Tree::InstanceMethods)
       end
     end
   
@@ -62,7 +63,6 @@ module TestInjector
     def define_association_test(association)
       collectible_associations = [:has_many, :has_and_belongs_to_many]
       association_name = association.options[:through] ? "#{association.name}_through_#{association.options[:through]}" : association.name
-      remove_method "test_#{association.macro}_#{association_name}" rescue
       define_method "test_#{association.macro}_#{association_name}" do
         record = klass.find(:first)
         # tests for associations that return a collection of objects
@@ -70,17 +70,16 @@ module TestInjector
           assert_kind_of Array, record.send(association.name), "#{klass}##{association.name} expected an array of #{association.class_name}'s"
           assert_kind_of association.klass, record.send(association.name).first, 
             "#{klass}##{association.name}.first should have returned a #{association.class_name}. If the result is a NilClass, verify your fixtures."
-          associated_record_ids = record.send(association.name).map {|r| r.id}
-          assert record.destroy
-          msg = "Unexpected result when calling #{association.options[:dependent]} on dependent association :#{association.name}"
-          if [:destroy, :delete_all].include?(association.options[:dependent])
-            associated_record_ids.each do |record_id|
-              assert_raises(ActiveRecord::RecordNotFound, msg) { association.klass.find(record_id) }
-            end
-          elsif association.options[:dependent] == :nullify
+          
+          if association.options[:dependent]
+            msg = "Unexpected result when calling #{association.options[:dependent]} on dependent association :#{association.name}"
+            associated_record_ids = record.send(association.name).map {|r| r.id}
             assert record.destroy
-            associated_record_ids.each do |record_id| 
-              assert [0,'0',nil].include?(association.klass.find(record_id).send(association.primary_key_name)), msg
+            case association.options[:dependent]
+            when :destroy, :delete_all  
+              associated_record_ids.each {|r| assert_raises(ActiveRecord::RecordNotFound, msg) { association.klass.find(r) }}
+            when :nullify
+              associated_record_ids.each {|r| assert_nil association.klass.find(r).send(association.primary_key_name), msg}
             end
           end
       
@@ -132,6 +131,15 @@ module TestInjector
         model2 = base.find(:first)
         assert model1.save
         assert_raises(ActiveRecord::StaleObjectError, msg) { model2.save }
+      end
+    end
+    
+    def define_acts_as_tree_test(base)
+      define_method "test_acts_as_tree_destroys_children" do
+        model = base.find(:first)
+        assert model.destroy
+        child_ids = all_descendants(model) + [model.id]
+        child_ids.each {|r| assert_raises(ActiveRecord::RecordNotFound) {base.find(r)}}
       end
     end
     
