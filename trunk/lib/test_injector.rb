@@ -45,7 +45,6 @@ module TestInjector
         inject_association_tests
         define_acts_as_versioned_test(klass) if klass.respond_to?(:acts_as_versioned) and klass.respond_to?(:versioned_table_name)
         define_optimistic_locking_test(klass) if klass.column_names.include?("lock_version") && ActiveRecord::Base.lock_optimistically == true
-        define_acts_as_tree_test(klass) if klass.include?(ActiveRecord::Acts::Tree::InstanceMethods)
       end
     end
   
@@ -132,15 +131,6 @@ module TestInjector
         model2 = base.find(:first)
         assert model1.save
         assert_raises(ActiveRecord::StaleObjectError, msg) { model2.save }
-      end
-    end
-    
-    def define_acts_as_tree_test(base)
-      define_method "test_acts_as_tree_destroys_children" do
-        model = base.find(:first)
-        assert model.destroy
-        child_ids = all_descendants(model) + [model.id]
-        child_ids.each {|r| assert_raises(ActiveRecord::RecordNotFound) {base.find(r)}}
       end
     end
     
