@@ -1,18 +1,76 @@
-TestInjector
-============
+===== TestInjector plugin =====
 
-inject_association_tests
-------------------------
+Copyright 2006 Keith Morrison <keithm@infused.org>
 
-For each association in the tested ActiveRecord model, a number of tests will be injected
-into the unit test:
-	- creates a test for the fixture that should be defined within the unit test
+==== Tests performed ====
 
-- creates a test to verify the proper operation of the acts_as_versioned plugin if defined on the ActiveRecord model
-- creates a test to verify that optimistic locking is working correctly
+The automatically injected tests are currently limited to tests against ActiveRecord models.  However, there
+is nothing stopping you from adding tests for other portions of the framework.
+
+=== ActiveRecord tests ===
+
+Every association defined in the ActiveRecord model. A common model might look like:
+
+	class User < ActiveRecord::Base
+		has_and_belongs_to_many :groups
+		belongs_to :company
+		has_many :purchases, :dependent => :nullify
+		has_many :subscriptions, :dependent => :destroy
+		has_many :newspapers, :through => subscriptions, :source => :orders
+	end
 	
-TODO
-====
+	By calling inject_activerecord_tests some where in the class definition, several test will be injected into 
+	the unit test at runtime.
+	
+	def test_has_and_belongs_to_many_groups
+		# asserts that groups is an Array of Groups
+	end
+
+	def test_belongs_to_company
+		# asserts that company return an instance of Company
+	end
+	
+	def test_has_many_purchases
+		# asserts that purchases is an Array of Purchases
+		# asserts that associated purchases's user_id column is nullified when the user is deleted
+	end
+	
+	def test_has_many_subscriptions
+		# asserts that subscriptions is an array of Subscriptions
+		# asserts that all subscriptions are destroyed when a User is deleted
+	end
+	
+	def test_has_many_newspapers_through_subscriptions
+		# asserts that newspapers is an array of Newspapers
+	end
+	
+	def test_fixture_defined_for_companies
+		# tests to see if a fixture called 'companies' is defined in the unit test
+	end
+	
+	def test_fixture_defined_for_purchases
+	  # tests to see if a fixture called 'orders' is defined in the unit test
+	end
+	
+	def test_fixture_defined_for_subscriptions
+	  # tests to see if a fixture called 'subscriptions' is defined in the unit test
+	end
+	
+	def test_fixture_defined_for_newspapers
+		# tests to see if a fixture called 'newspapers' is defined in the unit test
+	end
+	
+	# if the users table has a 'lock_version' column, one test will be defined
+	def test_optimistic_locking
+		# forces a StaleObjectError in order to test that optimisic locking is functioning correctly
+	end
+	
+	# if the users table is using the acts_as_versioned plugin by technoweenie, one test will be defined
+	def test_acts_as_versioned
+		# tests that the versioned table is set up correctly by exercising the versioning system
+	end
+	
+==== To do ====
 
 - Better tests on polymorphic associations
 - Test standard validations
