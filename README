@@ -1,26 +1,34 @@
-===== TestInjector plugin =====
+= TestInjector plugin
 
 Copyright 2006 Keith Morrison <keithm@infused.org>
 
-==== Tests performed ====
+== Tests performed
 
 The automatically injected tests are currently limited to tests against ActiveRecord models.  However, there
 is nothing stopping you from adding tests for other portions of the framework.
 
-=== ActiveRecord tests ===
+== ActiveRecord tests
 
 Every association defined in the ActiveRecord model. A common model might look like:
 
 	class User < ActiveRecord::Base
 		has_and_belongs_to_many :groups
 		belongs_to :company
-		has_many :purchases, :dependent => :nullify
+		has_many :purchases, :class_name => "Order", :dependent => :nullify
 		has_many :subscriptions, :dependent => :destroy
-		has_many :newspapers, :through => subscriptions, :source => :orders
+		has_many :newspapers, :through => subscriptions
 	end
 	
-	By calling inject_activerecord_tests some where in the class definition, several test will be injected into 
+	By calling inject_activerecord_tests some here in the class definition, several test will be injected into 
 	the unit test at runtime.
+	
+	class UserTest < Test::Unit::TestCase
+		fixtures :groups, :companies, :orders, :subscriptions, :newspapers
+		inject_activerecord_tests
+	end	
+	
+	Based on the example User class, the following tests will be run (notice that we didn't have to define any test
+	methods in the test class):
 	
 	def test_has_and_belongs_to_many_groups
 		# asserts that groups is an Array of Groups
@@ -70,7 +78,7 @@ Every association defined in the ActiveRecord model. A common model might look l
 		# tests that the versioned table is set up correctly by exercising the versioning system
 	end
 	
-==== To do ====
+== To do
 
-- Better tests on polymorphic associations
-- Test standard validations
+* Better tests on polymorphic associations
+* Test standard validations
