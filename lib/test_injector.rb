@@ -34,6 +34,10 @@ module TestInjector
     return id_only ? nodes.collect {|node| node.id} : nodes
   end
   
+  def method_name
+    return $1 if /`(.*)'/.match(caller.first)
+  end
+  
   module ClassMethods
     
     def klass
