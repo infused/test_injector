@@ -29,9 +29,9 @@ module TestInjector
   end
   
   # Get all descendants of an acts_as_tree node
-  def all_descendants(tree_node, id_only = true)
+  def all_descendants(tree_node, ids_only = true)
     nodes = tree_node.children.each {|subnode| all_descendants(subnode)}.flatten
-    return id_only ? nodes.collect {|node| node.id} : nodes
+    return ids_only ? nodes.collect {|node| node.id} : nodes
   end
   
   def method_name
@@ -42,6 +42,14 @@ module TestInjector
     
     def klass
       @klass ||= Module.const_get(self.to_s.gsub(/Test$/, ''))
+    end
+    
+    def inject_tests(*tests)
+      tests.each {|test| send("inject_#{test.to_s}_tests")}
+    end
+    
+    def inject_active_record_tests
+      inject_activerecord_tests
     end
     
     def inject_activerecord_tests

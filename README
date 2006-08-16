@@ -24,7 +24,7 @@ Every association defined in the ActiveRecord model. A common model might look l
 	
 	class UserTest < Test::Unit::TestCase
 		fixtures :groups, :companies, :orders, :subscriptions, :newspapers
-		inject_activerecord_tests
+		inject_tests :activerecord
 	end	
 	
 	Based on the example User class, the following tests will be run (notice that we didn't have to define any test
@@ -82,3 +82,5 @@ Every association defined in the ActiveRecord model. A common model might look l
 
 * Better tests on polymorphic associations
 * Test standard validations
+* ActionController improvements:
+  * Replace @request, @controller, and @response with accessor methods
