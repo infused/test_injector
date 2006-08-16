@@ -1,3 +1,4 @@
+require 'breakpoint'
 # Copyright (c) 2006 Keith Morrison (keithm@infused.org)
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -45,7 +46,9 @@ module TestInjector
     end
     
     def inject_tests(*tests)
-      tests.each {|test| send("inject_#{test.to_s}_tests")}
+      tests.each do |test| 
+        send("inject_#{test.to_s}_tests") rescue raise ":#{test} is not a valid test injection suite"
+      end
     end
     
     def inject_active_record_tests
