@@ -45,6 +45,7 @@ module TestInjector
     end
     
     def inject_tests(*tests)
+      @options = tests.last.is_a?(Hash) ? tests.pop : {:ignored_associtions => []}
       tests.each do |test| 
         send("inject_#{test.to_s}_tests") rescue raise ":#{test} is not a valid test injection suite"
       end
@@ -63,7 +64,7 @@ module TestInjector
     end
   
     def inject_association_tests
-      ignore_associations = [:versions, :parent, :children]
+      ignore_associations = [:versions, :parent, :children] + @options[:ignored_associations].to_a
       collectible_associations = [:has_many, :has_and_belongs_to_many]
       klass.reflect_on_all_associations.each do |association|
         unless ignore_associations.include?(association.name)
