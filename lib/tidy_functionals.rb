@@ -1,9 +1,9 @@
-# 
 class Test::Unit::TestCase
   def self.inherited(sub)
     super
     if sub.to_s =~ /ControllerTest$/
       sub.class_eval do
+        attr_accessor :controller, :request, :response
         def initialize(name)
           super
           if self.class.to_s =~ /\b(.+?Controller)Test$/
