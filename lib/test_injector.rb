@@ -1,4 +1,3 @@
-require 'breakpoint'
 # Copyright (c) 2006 Keith Morrison (keithm@infused.org)
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
