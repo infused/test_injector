@@ -19,8 +19,8 @@ Every association defined in the ActiveRecord model. A common model might look l
 		has_many :newspapers, :through => subscriptions
 	end
 	
-	By calling inject_activerecord_tests some here in the class definition, several test will be injected into 
-	the unit test at runtime.
+	By calling inject_activerecord_tests in the class definition, several test will be injected into 
+	the test suite at runtime.
 	
 	class UserTest < Test::Unit::TestCase
 		fixtures :groups, :companies, :orders, :subscriptions, :newspapers
@@ -78,9 +78,19 @@ Every association defined in the ActiveRecord model. A common model might look l
 		# tests that the versioned table is set up correctly by exercising the versioning system
 	end
 	
+=== Ignoring associations
+
+	You can specify associations that should not be tested when by using the :ignore_associations option:
+	
+	inject_tests :activerecord, :ignore_associations => [:company, :groups]
+
+=== Overriding injected tests
+
+	As long as you use place the inject_tests declaration at the top of the test class, you can override
+	any of the injected tests by redeclaring a method with the same name.  See above for the test method
+	naming.
+	
 == To do
 
 * Better tests on polymorphic associations
 * Test standard validations
-* ActionController improvements:
-  * Replace @request, @controller, and @response with accessor methods
