@@ -1,9 +1,11 @@
 class Test::Unit::TestCase
+  
   def self.inherited(sub)
     super
-    if sub.to_s =~ /ControllerTest$/
+    if sub.to_s =~ /\b(.+?Controller)Test$/ && instance_eval($1)
       sub.class_eval do
         attr_accessor :controller, :request, :response
+        
         def initialize(name)
           super
           if self.class.to_s =~ /\b(.+?Controller)Test$/
@@ -17,5 +19,8 @@ class Test::Unit::TestCase
         end
       end
     end
+    
+  rescue NameError
   end
+  
 end
