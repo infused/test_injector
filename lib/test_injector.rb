@@ -67,7 +67,7 @@ module TestInjector
       ignore_associations = [:versions, :parent, :children] + @options[:ignore_associations].to_a
       collectible_associations = [:has_many, :has_and_belongs_to_many]
       klass.reflect_on_all_associations.each do |association|
-        unless ignore_associations.include?(association.name)
+        unless ignore_associations.include?(association.name) || association.options[:polymorphic]
           define_fixture_test(association)
           if collectible_associations.include?(association.macro)
             define_collectible_association_test(association)
