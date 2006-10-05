@@ -58,7 +58,7 @@ module TestInjector
     def inject_activerecord_tests
       if klass.ancestors.include?(ActiveRecord::Base)
         inject_association_tests
-        define_acts_as_versioned_test(klass) if klass.respond_to?(:acts_as_versioned) and klass.respond_to?(:versioned_table_name)
+        define_acts_as_versioned_test(klass) if klass.respond_to?(:acts_as_versioned) && klass.respond_to?(:versioned_table_name)
         define_optimistic_locking_test(klass) if klass.column_names.include?("lock_version") && ActiveRecord::Base.lock_optimistically == true
       end
     end
