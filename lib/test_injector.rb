@@ -28,12 +28,6 @@ module TestInjector
     @klass ||= Module.const_get(self.class.to_s.gsub(/Test$/, ''))
   end
   
-  # Get all descendants of an acts_as_tree node
-  def all_descendants(tree_node, ids_only = true)
-    nodes = tree_node.children.each {|subnode| all_descendants(subnode)}.flatten
-    return ids_only ? nodes.collect {|node| node.id} : nodes
-  end
-  
   def method_name
     return $1 if /`(.*)'/.match(caller.first)
   end
