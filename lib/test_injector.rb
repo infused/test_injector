@@ -25,7 +25,7 @@ module TestInjector
   end
   
   def klass
-    @klass ||= Module.const_get(self.class.to_s.gsub(/Test$/, ''))
+    @klass ||= self.class.to_s.gsub(/Test$/, '').constantize
   end
   
   def method_name
@@ -35,7 +35,7 @@ module TestInjector
   module ClassMethods
     
     def klass
-      @klass ||= Module.const_get(self.to_s.gsub(/Test$/, ''))
+      @klass ||= self.to_s.gsub(/Test$/, '').constantize
     end
     
     def inject_tests(*tests)
